@@ -1,0 +1,12 @@
+<div class="header">
+  <button type="back" (click)="goBack()">Back</button>
+</div>
+
+<h2>Post an image</h2>
+<form (submit)="submitListing()" enctype="multipart/form-data">
+  <div>
+    <label for="image">Image:</label>
+    <input type="file" id="image" name="image" accept="image/*" (change)="handleImageUpload($event)" required>
+  </div>
+  <button type="submit">Submit</button>
+</form>

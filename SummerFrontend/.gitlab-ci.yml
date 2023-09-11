@@ -1,0 +1,40 @@
+variables:
+  BOT_NAME: "GRP13 GitLab Runner Bot"              # Bot's name that appears in the commit log
+  BOT_EMAIL: "202007668@uni.au.dk" # Bot's email, not important
+
+build:
+  stage: build
+  #tags:
+   # - dind
+  image: docker:19.03.12
+  services:
+    - docker:19.03.12-dind
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - docker build --tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA --tag $CI_REGISTRY_IMAGE:latest .
+    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA
+    - docker push $CI_REGISTRY_IMAGE:latest
+
+deploy:
+  dependencies:
+    - build
+  stage: deploy  # It only runs when *both* jobs in the test stage complete successfully.
+  image: alpine
+  script:
+    - apk add git
+    - wget https://github.com/mikefarah/yq/releases/download/v4.33.2/yq_linux_amd64.tar.gz -O - | tar xz && mv yq_linux_amd64 /usr/bin/yq
+    - git config --global user.name "${BOT_NAME}"
+    - git config --global user.email "${BOT_EMAIL}"
+    - git clone https://${GRP13_GITOPS_DEPLOYER}:${TOKEN}@gitlab.au.dk/group13-project-cluster/project-cluster.git
+    - cd project-cluster
+    - yq  -i eval "select(.kind==\"Deployment\").spec.template.spec.containers[0].image|=\"$CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA\"" frontend.yaml
+    - git add .
+    - git commit -m "Updated to tag $CI_COMMIT_SHORT_SHA"
+    - git push 
+
+  only:
+    - master
+  except:
+    - tags
+

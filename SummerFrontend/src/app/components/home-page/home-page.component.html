@@ -1,0 +1,16 @@
+<div class="main-page">
+  <h1>SummerFrontend - Image previews</h1>
+  <div class="buttons">
+    <button (click)="listProduct()">Post an image</button>
+    <button (click)="logout()">Logout</button>
+  </div>  
+</div>
+<div class="grid-container">
+  <div class="grid">
+    <div *ngFor="let image of images; let i = index" class="grid-item">
+      <img [src]="image" alt="Image">
+    </div>
+  </div>
+</div>
+
+
